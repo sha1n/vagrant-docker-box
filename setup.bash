@@ -21,13 +21,6 @@ else
     echo "Virtualbox already installed - skipping"
 fi
 
-if [ `command -v fig | wc -l` != "1" ]; then
-    echo "Downloading fig 0.5.1..."
-	curl -L https://github.com/orchardup/fig/releases/download/0.5.1/darwin > /usr/local/bin/fig
-	sudo chmod +x /usr/local/bin/fig
-else 
-	echo "fig already installed - skipping"
-fi
 
 echo ""
 echo "Bringing up docker virtual machine..."
