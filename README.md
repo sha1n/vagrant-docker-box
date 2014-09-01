@@ -9,5 +9,5 @@ To set up the environment run 'setup.bash' from a bash shell. The script will in
 After installation, it will bring up the vm with docker running in it.
 To work with docker do the following:
 
-1. Download docker client (brew install docker)
-2. Set environment variable DOCKER_HOST=tcp://localhost:2375
+1. Install docker client (brew install docker)
+2. Add 'export DOCKER_HOST=tcp://192.168.50.2:2375' to your shell profile
