@@ -26,5 +26,5 @@ echo ""
 echo "Bringing up docker virtual machine..."
 vagrant up
 
-echo "To be able to connect to the docker server, you need to set an environment variable: 'DOCKER_HOST=tcp://localhost:2375' in your shell, or export it from your shell profile/rc file"
+echo "To be able to connect to the docker daemon, add 'export DOCKER_HOST=tcp://192.168.50.2:2375' to your shell profile"
 
