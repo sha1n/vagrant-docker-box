@@ -1,3 +1,4 @@
 # Vagrant
 .vagrant
-
+.vm_config.json
+*.log

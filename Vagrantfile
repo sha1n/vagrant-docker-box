@@ -1,45 +1,115 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+require 'json'
 
-VAGRANTFILE_API_VERSION = "2"
+# Default VM size configuration
+vm_config = {
+    "cpus" => 2,
+    "memory" => 4096,
+    "disksize" => "10GB",
+    "ip" => "192.168.10.101",
+    "docker_port" => 2375,
+}
+# Load optional config overrides
+vm_config_path = File.dirname(__FILE__) + "/.vm_config.json"
+if File.exists?(vm_config_path)
+    vm_config_overrides = JSON.parse(File.read(vm_config_path))
+    vm_config = vm_config.merge(vm_config_overrides)
+end
 
-#
-# VM Configuration Constants
-#
-DOCKER_PORT     	= 2375
-CONTAINER_NODE_PORT	= 3000
-FW_NODE_PORT		= 3000
-IP              	= "192.168.50.2"
-MEMORY          	= "4096"
-CPUS            	= 4
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "ubuntu/bionic64"
+  config.disksize.size = vm_config["disksize"]
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # NOTE: This will enable public access to the opened port
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine and only allow access
+  # via 127.0.0.1 to disable public access
+  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
 
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-	
-	# Base on CoreOS VM, which includes docker 1.2.0
-  	config.vm.box = "yungsang/coreos-alpha"
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+  config.vm.network "forwarded_port", guest: 2375, host: vm_config["docker_port"]
+  config.vm.network "private_network", ip: vm_config["ip"]
 
-	# Sync host dir -> vm dir
-	#config.vm.synced_folder ".", "/ws"
 
-	# Forward Docker server port
-	config.vm.network "forwarded_port", guest: 2375, host: DOCKER_PORT
-	# Forward other ports
-	#config.vm.network "forwarded_port", guest: CONTAINER_NODE_PORT, host: FW_NODE_PORT
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
 
-	# Set an IP address to access the VM from your host
-	# To connect to the docker daemon add the following line to your shell profile: 
-	#
-	# 	export DOCKER_HOST=tcp://<IP>:<DOCKER_PORT>
-	#
-	config.vm.network :private_network, ip: IP
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
 
-	config.vm.provider :virtualbox do |vb|
-		vb.name = "docker-host-vm"
-		vb.cpus = CPUS
-		vb.customize ['modifyvm', :id, '--memory', MEMORY]
-		vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = vm_config["memory"]
+    vb.cpus = vm_config["cpus"]
+
+    vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
 		vb.customize ['modifyvm', :id, '--natdnsproxy1', 'on']
-	end
+  end
 
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   apt-get update
+  #   apt-get install -y apache2
+  # SHELL
+  config.vm.provision "shell", inline: <<-SHELL
+    apt update -y && apt upgrade -y
+    
+    wget -qO- https://get.docker.com/ | sh
+
+
+    echo '{"hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]}' > /etc/docker/daemon.json
+    mkdir -p /etc/systemd/system/docker.service.d
+    echo "[Service]
+    ExecStart=
+    ExecStart=/usr/bin/dockerd
+    " > /etc/systemd/system/docker.service.d/override.conf
+
+    systemctl daemon-reload
+    systemctl restart docker.service
+
+  SHELL
 end
