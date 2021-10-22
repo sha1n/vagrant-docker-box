@@ -1,6 +1,9 @@
 # vagrant-docker-box
 This repo provides a basic setup for running a docker daemon on a hosted VM using vagrant + virtualbox.
 
+**:warning: &nbsp; Doesn't work on macOS Big Sur with VBox v6.1.28 (see [bug report](https://www.virtualbox.org/ticket/20626))&nbsp;:warning:**
+
+
 ## How To Setup
 ```
 # install required tools
