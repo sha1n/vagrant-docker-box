@@ -4,7 +4,8 @@ This repo provides a basic setup for running a docker daemon on a hosted VM usin
 **:warning: &nbsp; Doesn't work on macOS Big Sur with VBox v6.1.28 (see [bug report](https://www.virtualbox.org/ticket/20626))&nbsp;:warning:**
 
 
-## How To Setup
+## How To Setup on macOS
+Tested on an intel-based macbook pro running `macOS Big Sur 11.6` and `VirtualBox 6.1.26 r145957 (Qt5.6.3)`
 ```
 # install required tools
 brew install vagrant
